@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { usePDF } from 'react-to-pdf';
 import { Sun, Moon, Download, Globe, ShieldCheck, Zap } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 function App() {
   const [url, setUrl] = useState('');
@@ -10,7 +11,22 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [error, setError] = useState(null);
   const targetRef = useRef();
-  const { toPDF } = usePDF({ filename: 'SEO-Report.pdf' });
+
+  const handleDownloadPDF = async () => {
+    if (!targetRef.current) return;
+    try {
+      const canvas = await html2canvas(targetRef.current, { scale: 2, backgroundColor: '#ffffff' });
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save('SEO-Report.pdf');
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      alert('Failed to generate PDF');
+    }
+  };
 
   // Dark Mode Toggle Logic
   useEffect(() => {
@@ -120,7 +136,7 @@ function App() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold dark:text-white uppercase tracking-widest text-slate-400">Report for: {url}</h2>
             <button 
-              onClick={() => toPDF()}
+              onClick={handleDownloadPDF}
               className="flex items-center gap-2 bg-slate-900 dark:bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:scale-105 transition"
             >
               <Download size={18}/> Save PDF
