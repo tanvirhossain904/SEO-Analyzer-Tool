@@ -1,181 +1,129 @@
-import React, { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import './App.css';
+import { usePDF } from 'react-to-pdf';
+import { Sun, Moon, Download, Globe, ShieldCheck, Zap } from 'lucide-react';
 
 function App() {
   const [url, setUrl] = useState('');
+  const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState(null);
-  const [error, setError] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
+  const targetRef = useRef();
+  const { toPDF } = usePDF({ filename: 'SEO-Report.pdf' });
 
-  const handleScan = async (e) => {
-    e.preventDefault();
-    
-    if (!url.trim()) {
-      setError('Please enter a URL');
-      return;
-    }
+  // Dark Mode Toggle Logic
+  useEffect(() => {
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  }, [darkMode]);
 
+  const handleAudit = async () => {
+    if (!url) return;
     setLoading(true);
-    setError('');
-    setResults(null);
-
     try {
-      let urlToScan = url;
-      if (!urlToScan.startsWith('http://') && !urlToScan.startsWith('https://')) {
-        urlToScan = 'https://' + urlToScan;
-      }
-
-      const response = await axios.post('http://localhost:5000/api/audit', {
-        url: urlToScan,
-      });
-
-      setResults(response.data);
+      const res = await axios.post('http://localhost:5000/api/audit', { url });
+      setResult(res.data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to audit the URL. Check if the backend is running.');
-      setResults(null);
+      alert("Error connecting to server.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12 pt-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            🔍 SEO Audit Dashboard
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Analyze your website for SEO issues in seconds
-          </p>
+    <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300">
+      {/* NAVBAR */}
+      <nav className="flex justify-between items-center px-6 py-4 border-b dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="flex items-center gap-2 font-black text-2xl dark:text-white">
+          <div className="bg-blue-600 p-1.5 rounded-lg text-white"><Globe size={24}/></div>
+          SEO<span className="text-blue-600">Vision</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-white transition">
+            {darkMode ? <Sun size={20}/> : <Moon size={20}/>}
+          </button>
+          <button className="hidden md:block bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
+            Sign In
+          </button>
+        </div>
+      </nav>
+
+      {/* HERO SECTION */}
+      <section className="py-20 px-6 text-center max-w-5xl mx-auto">
+        <h1 className="text-5xl md:text-7xl font-extrabold mb-6 dark:text-white tracking-tight">
+          Is your SEO <span className="text-blue-600">invisible?</span>
+        </h1>
+        <p className="text-lg text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
+          Get a professional-grade audit in seconds. We analyze your meta-data, headers, and images to help you climb the Google rankings.
+        </p>
+
+        <div className="flex flex-col md:flex-row gap-2 bg-white dark:bg-slate-900 p-2 rounded-2xl shadow-2xl border dark:border-slate-800 max-w-2xl mx-auto mb-16">
+          <input 
+            type="text" 
+            placeholder="Paste your URL here (e.g. https://yoursite.com)"
+            className="flex-1 px-4 py-3 bg-transparent focus:outline-none dark:text-white"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+          <button 
+            onClick={handleAudit} 
+            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition"
+          >
+            {loading ? 'Analyzing...' : 'Start Audit'}
+          </button>
         </div>
 
-        {/* Search Section */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-          <form onSubmit={handleScan} className="flex gap-4 flex-col sm:flex-row">
-            <input
-              type="text"
-              placeholder="Enter website URL (e.g., example.com or https://example.com)"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 whitespace-nowrap"
+        {/* FEATURE CHIPS */}
+        <div className="flex flex-wrap justify-center gap-8 opacity-60 dark:text-white">
+          <div className="flex items-center gap-2"><ShieldCheck size={18}/> Enterprise Ready</div>
+          <div className="flex items-center gap-2"><Zap size={18}/> Instant Analysis</div>
+          <div className="flex items-center gap-2">📊 PDF Reports</div>
+        </div>
+      </section>
+
+      {/* RESULT DASHBOARD */}
+      {result && (
+        <div className="max-w-5xl mx-auto pb-24 px-6 animate-in fade-in slide-in-from-bottom-10 duration-700">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold dark:text-white uppercase tracking-widest text-slate-400">Report for: {url}</h2>
+            <button 
+              onClick={() => toPDF()}
+              className="flex items-center gap-2 bg-slate-900 dark:bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:scale-105 transition"
             >
-              {loading ? 'Scanning...' : 'Scan Website'}
+              <Download size={18}/> Save PDF
             </button>
-          </form>
+          </div>
+
+          <div ref={targetRef} className="bg-white dark:bg-slate-900 border dark:border-slate-800 rounded-3xl p-8 shadow-sm">
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <MetricCard title="H1 Presence" value={result.h1Count} sub="Target: 1" status={result.h1Count === 1} />
+                <MetricCard title="Description" value={result.description.length + " chars"} sub="Target: 120-160" status={result.description.length > 50} />
+                <MetricCard title="Images Missing Alt" value={result.imagesWithoutAlt.length} sub="Lower is better" status={result.imagesWithoutAlt.length === 0} />
+             </div>
+             
+             <div className="dark:text-slate-300">
+                <h3 className="font-bold text-lg mb-4">Detailed Insights</h3>
+                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border dark:border-slate-700">
+                   <p className="font-medium">Title Tag:</p>
+                   <p className="text-slate-500 mb-4">{result.title}</p>
+                   <p className="font-medium">Meta Description:</p>
+                   <p className="text-slate-500">{result.description}</p>
+                </div>
+             </div>
+          </div>
         </div>
+      )}
+    </div>
+  );
+}
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg mb-8">
-            <p className="font-semibold">⚠️ Error</p>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {/* Results Section */}
-        {results && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Key Metrics */}
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-800">SEO Metrics</h2>
-
-              {/* Title Card */}
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-                <h3 className="text-gray-600 text-sm font-semibold uppercase mb-2">
-                  Page Title
-                </h3>
-                <p className="text-gray-800 text-lg font-medium break-words">
-                  {results.title || <span className="text-red-500">Missing</span>}
-                </p>
-                <p className="text-gray-500 text-xs mt-2">
-                  {results.title ? `${results.title.length} characters` : 'Recommended: 30-60 characters'}
-                </p>
-              </div>
-
-              {/* Meta Description Card */}
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-                <h3 className="text-gray-600 text-sm font-semibold uppercase mb-2">
-                  Meta Description
-                </h3>
-                <p className="text-gray-800 text-lg font-medium break-words">
-                  {results.description || <span className="text-red-500">Missing</span>}
-                </p>
-                <p className="text-gray-500 text-xs mt-2">
-                  {results.description ? `${results.description.length} characters` : 'Recommended: 120-160 characters'}
-                </p>
-              </div>
-
-              {/* H1 Count Card */}
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-                <h3 className="text-gray-600 text-sm font-semibold uppercase mb-2">
-                  H1 Headings
-                </h3>
-                <div className="flex items-center justify-between">
-                  <p className="text-gray-800 text-4xl font-bold">{results.h1Count}</p>
-                  <div className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                    results.h1Count === 1 ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                  }`}>
-                    {results.h1Count === 1 ? '✓ Good' : results.h1Count === 0 ? '✗ Missing' : '⚠ Multiple'}
-                  </div>
-                </div>
-                <p className="text-gray-500 text-xs mt-2">
-                  Recommended: Exactly 1 H1 per page
-                </p>
-              </div>
-            </div>
-
-            {/* Images Without Alt Tags */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Images Missing Alt Tags
-              </h2>
-              
-              {results.imagesWithoutAlt.length === 0 ? (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                  <p className="font-semibold">✓ All images have alt tags!</p>
-                  <p className="text-sm mt-1">Great job! All images are properly optimized for accessibility.</p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  <p className="text-red-600 font-semibold mb-3">
-                    Found {results.imagesWithoutAlt.length} image(s) without alt tags
-                  </p>
-                  {results.imagesWithoutAlt.slice(0, 20).map((src, index) => (
-                    <div key={index} className="bg-red-50 border border-red-200 rounded p-3">
-                      <p className="text-xs text-gray-600 font-mono break-all">
-                        {src}
-                      </p>
-                    </div>
-                  ))}
-                  {results.imagesWithoutAlt.length > 20 && (
-                    <div className="text-center text-gray-600 text-sm font-semibold py-2">
-                      ... and {results.imagesWithoutAlt.length - 20} more
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!results && !loading && !error && (
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <p className="text-gray-500 text-lg">
-              Enter a URL and click "Scan Website" to analyze your site's SEO
-            </p>
-          </div>
-        )}
-      </div>
+// Reusable Metric Card Component
+function MetricCard({ title, value, sub, status }) {
+  return (
+    <div className="p-6 rounded-2xl border dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+      <p className="text-xs font-bold text-slate-400 uppercase mb-2">{title}</p>
+      <div className={`text-3xl font-black mb-1 ${status ? 'text-green-500' : 'text-red-500'}`}>{value}</div>
+      <p className="text-sm text-slate-500">{sub}</p>
     </div>
   );
 }
