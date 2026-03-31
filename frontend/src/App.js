@@ -8,6 +8,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [error, setError] = useState(null);
   const targetRef = useRef();
   const { toPDF } = usePDF({ filename: 'SEO-Report.pdf' });
 
@@ -18,13 +19,39 @@ function App() {
   }, [darkMode]);
 
   const handleAudit = async () => {
-    if (!url) return;
+    if (!url) {
+      setError('Please enter a URL');
+      return;
+    }
     setLoading(true);
+    setError(null);
+    setResult(null);
     try {
-      const res = await axios.post('http://localhost:5000/api/audit', { url });
+      // Ensure URL has protocol
+      let auditUrl = url;
+      if (!auditUrl.startsWith('http://') && !auditUrl.startsWith('https://')) {
+        auditUrl = 'https://' + auditUrl;
+      }
+      const res = await axios.post('http://localhost:5000/api/audit', { url: auditUrl }, {
+        timeout: 15000
+      });
       setResult(res.data);
+      setError(null);
     } catch (err) {
-      alert("Error connecting to server.");
+      let errorMessage = 'Error connecting to server.';
+      if (err.code === 'ECONNABORTED') {
+        errorMessage = 'Request timeout. Please try again.';
+      } else if (err.message === 'Network Error') {
+        errorMessage = 'Cannot connect to backend server. Make sure it\'s running on port 5000.';
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. Please try another URL.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+      console.error('Audit error:', err);
     } finally {
       setLoading(false);
     }
@@ -72,6 +99,12 @@ function App() {
             {loading ? 'Analyzing...' : 'Start Audit'}
           </button>
         </div>
+
+        {error && (
+          <div className="max-w-2xl mx-auto mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-red-700 dark:text-red-400 font-semibold">{error}</p>
+          </div>
+        )}
 
         {/* FEATURE CHIPS */}
         <div className="flex flex-wrap justify-center gap-8 opacity-60 dark:text-white">
