@@ -4,14 +4,18 @@
   "description": "React frontend for SEO Analyzer Dashboard",
   "private": true,
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.4",
     "axios": "^1.14.0",
+    "framer-motion": "^12.38.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.376.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.30.3",
     "react-scripts": "5.0.1",
-    "react-to-pdf": "^3.2.2"
+    "react-to-pdf": "^3.2.2",
+    "recharts": "^3.8.1"
   },
   "scripts": {
     "start": "react-scripts start",

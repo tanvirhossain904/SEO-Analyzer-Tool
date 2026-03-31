@@ -24,14 +24,21 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.4",
+    "@clerk/express": "^2.0.7",
     "axios": "^1.14.0",
     "cheerio": "^1.2.0",
+    "clsx": "^2.1.1",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
     "mongodb": "^7.1.1",
-    "react-to-pdf": "^3.2.2"
+    "mongoose": "^9.3.3",
+    "react-to-pdf": "^3.2.2",
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

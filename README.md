@@ -1,203 +1,324 @@
-# SEO Analyzer Tool - MERN Stack
+# SEO-Vision: Enterprise SEO SaaS Platform
 
-A modern, full-stack SEO audit dashboard built with React, Express, Node.js, and Tailwind CSS. Analyze web pages for critical SEO issues in seconds.
+A professional-grade SEO Audit and Analytics Dashboard built with the MERN stack (MongoDB, Express, React, Node.js).
 
-## Features
+## 🚀 Features
 
-✨ **Key Features:**
-- 🔍 Extract page title and meta descriptions
-- 📊 Count H1 headings
-- 🖼️ Identify images missing alt tags
-- 🎨 Beautiful, responsive UI with Tailwind CSS
-- ⚡ Real-time error handling and validation
-- 📱 Mobile-friendly design
-- 🚀 Fast backend with Node.js/Express
+### Frontend
+- ✅ **Clerk Authentication** - Secure user authentication and management
+- ✅ **Responsive Dashboard** - Beautiful UI with Tailwind CSS
+- ✅ **Dark/Light Mode** - Persistent theme support with ThemeContext
+- ✅ **Bento Grid Layout** - Modern dashboard with key metrics
+- ✅ **Real-time Charts** - SEO score visualization with Recharts
+- ✅ **Audit History** - View and manage all previous audits
+- ✅ **Framer Motion Animations** - Smooth transitions and interactions
+- ✅ **Lucide React Icons** - Professional icon system
 
-## Project Structure
+### Backend
+- ✅ **MongoDB Integration** - Persistent data storage with Mongoose
+- ✅ **Web Scraping** - Advanced HTML parsing with Cheerio
+- ✅ **24-Hour Caching** - Smart caching to avoid re-scraping
+- ✅ **SEO Scoring Algorithm** - Enterprise-grade scoring (0-100)
+- ✅ **Robots.txt Compliance** - Respects site crawling rules
+- ✅ **Custom User-Agent** - Professional crawler identification
+- ✅ **RESTful API** - V1 API with protected routes
+- ✅ **Dashboard Aggregation** - Real-time analytics endpoints
+
+## 📋 Tech Stack
+
+### Frontend
+- React 18
+- Framer Motion (animations)
+- Recharts (visualizations)
+- Tailwind CSS (styling)
+- Lucide React (icons)
+- Clerk (authentication)
+- React Router (navigation)
+
+### Backend
+- Node.js & Express
+- MongoDB & Mongoose
+- Axios & Cheerio (web scraping)
+- @clerk/express (Clerk middleware)
+- Dotenv (environment config)
+
+## 📁 Project Structure
 
 ```
 SEO-Analyzer-Tool/
 ├── backend/
-│   ├── server.js              # Express server with SEO scraping endpoints
-│   └── package.json           # Backend dependencies
+│   ├── controllers/
+│   │   └── auditController.js      # Core audit logic & caching
+│   ├── models/
+│   │   └── Audit.js                # MongoDB schema
+│   ├── utils/
+│   │   └── seoScorer.js            # Scoring algorithm
+│   └── server.js                   # Express app & routes
 ├── frontend/
-│   ├── public/
-│   │   └── index.html         # HTML entry point
 │   ├── src/
-│   │   ├── App.js             # Main React component with dashboard UI
-│   │   ├── App.css            # App styles
-│   │   ├── index.js           # React entry point
-│   │   └── index.css          # Global styles + Tailwind imports
-│   ├── tailwind.config.js     # Tailwind CSS configuration
-│   ├── postcss.config.js      # PostCSS configuration
-│   └── package.json           # Frontend dependencies
-├── package.json               # Root scripts for managing both projects
-└── README.md                  # This file
+│   │   ├── components/
+│   │   │   ├── SideNav.jsx         # Navigation sidebar
+│   │   │   ├── Dashboard.jsx       # Main dashboard
+│   │   │   ├── History.jsx         # Audit history
+│   │   │   └── Landing.jsx         # Landing page
+│   │   ├── contexts/
+│   │   │   └── ThemeContext.jsx    # Dark/Light mode
+│   │   ├── App.jsx                 # Main routing
+│   │   ├── index.js                # React entry point
+│   │   └── index.css               # Global styles
+│   ├── public/
+│   │   └── index.html
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── postcss.config.js
+├── .env                            # Environment variables
+├── package.json                    # Root dependencies
+└── README.md                       # This file
 ```
 
-## Installation
+## 🔧 Setup Instructions
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
+- Node.js 18+
+- MongoDB 7.0+ (local or MongoDB Atlas)
+- Clerk account (https://clerk.com)
 
-### Setup
+### 1. Clone & Install
 
-1. **Clone and navigate to the project:**
-   ```bash
-   cd SEO-Analyzer-Tool
-   ```
+```bash
+cd SEO-Analyzer-Tool
+npm install                        # Install backend dependencies
+cd frontend && npm install         # Install frontend dependencies
+```
 
-2. **Install all dependencies:**
-   ```bash
-   npm run install-all
-   ```
-   This installs both root dependencies and frontend dependencies.
+### 2. Configure Environment Variables
 
-## Running the Application
+Create `.env` in the root directory:
 
-### Option 1: Run Both Servers Together (Recommended)
+```env
+# MongoDB
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/seo-vision?retryWrites=true&w=majority
 
+# Clerk
+CLERK_SECRET_KEY=your_clerk_secret_key
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+
+# Server
+PORT=5000
+NODE_ENV=development
+```
+
+Create `frontend/.env.local`:
+
+```env
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+```
+
+### 3. Start Development Servers
+
+**Option A: Run both concurrently**
 ```bash
 npm run dev
 ```
 
-This starts both the backend (`localhost:5000`) and frontend (`localhost:3000`) concurrently.
+**Option B: Run separately**
 
-### Option 2: Run Separately
-
-**Terminal 1 - Backend:**
+Terminal 1 (Backend):
 ```bash
 npm run server
+# Backend runs on http://localhost:5000
 ```
-Backend will run on `http://localhost:5000`
 
-**Terminal 2 - Frontend:**
+Terminal 2 (Frontend):
 ```bash
 npm run client
+# Frontend runs on http://localhost:3000
 ```
-Frontend will run on `http://localhost:3000`
 
-## API Endpoints
+## 🎯 API Endpoints
 
-### POST `/api/audit`
-Analyzes a URL and returns SEO metrics.
+### Legacy Endpoints (Backward Compatible)
+- `POST /api/audit` - Basic audit endpoint
 
-**Request:**
-```json
+### Enterprise API (v1) - Protected Routes
+- `POST /api/v1/audit` - Perform SEO audit
+- `GET /api/v1/audits` - Get user's audit history
+- `GET /api/v1/audits/:id` - Get specific audit
+- `DELETE /api/v1/audits/:id` - Delete audit
+- `GET /api/v1/dashboard` - Get dashboard summary
+
+**All v1 endpoints require Clerk authentication**
+
+## 📊 SEO Scoring Algorithm
+
+The platform uses an enterprise-grade scoring system (0-100):
+
+- **Title Tag** (10 pts) - Presence, length (30-60 chars)
+- **Meta Description** (15 pts) - Presence, length (120-160 chars)
+- **H1 Tags** (15 pts) - Exactly one H1 per page
+- **Duplicate H1s** (10 pts) - Penalizes duplicates
+- **Alt Tags** (15 pts) - All images have alt text
+- **HTTPS/SSL** (10 pts) - Secure connection required
+- **Content Quality** (10 pts) - Word count, readability
+- **Robots.txt** (5 pts) - Crawler compliance
+
+## 🔐 Database Schema
+
+### Audit Model
+```javascript
 {
-  "url": "https://example.com"
+  userId: String,                     // Clerk user ID
+  url: String,                        // Website URL
+  title: String,
+  metaDescription: String,
+  h1Count: Number,
+  duplicateH1s: [String],
+  imagesWithoutAlt: [Object],
+  keywordDensity: Object,
+  seoScore: Number,                   // 0-100
+  performanceData: {
+    lcp: Number,                      // Largest Contentful Paint
+    fcp: Number,                      // First Contentful Paint
+    clsScore: Number,                 // Cumulative Layout Shift
+    speedScore: Number
+  },
+  securityStatus: {
+    isHttps: Boolean,
+    hasSslCertificate: Boolean
+  },
+  contentAnalysis: {
+    wordCount: Number,
+    readabilityScore: Number,
+    keywordCount: Number,
+    metaLength: Number,
+    titleLength: Number
+  },
+  robotsAllowed: Boolean,
+  lastScannedAt: Date,               // For 24-hour cache
+  createdAt: Date,
+  updatedAt: Date
 }
 ```
 
-**Response:**
-```json
-{
-  "title": "Page Title",
-  "description": "Meta description text",
-  "h1Count": 1,
-  "imagesWithoutAlt": ["image-url-1", "image-url-2"]
-}
+## 🎨 UI Components
+
+### SideNav
+- Theme toggle (Dark/Light mode)
+- Navigation links
+- User profile from Clerk
+- Responsive on mobile
+
+### Dashboard
+- URL input with automatic protocol detection
+- SEO Health Score (Pie chart)
+- Performance Metrics (Line chart)
+- Security Status card
+- Content Analysis metrics
+- Real-time error handling
+
+### History
+- Paginated audit list
+- Quick stats for each audit
+- Delete functionality
+- Sort by date
+
+### Landing
+- Hero section with CTA
+- Feature showcase
+- Clerk Sign In/Up buttons
+- Framer Motion animations
+
+## 🌓 Dark/Light Mode
+
+- Persists to localStorage
+- Syncs across all pages
+- System preference fallback
+- Tailwind CSS dark mode support
+
+## 📱 Responsive Design
+
+- Mobile-first approach
+- Tailwind breakpoints (sm, md, lg)
+- Touch-friendly components
+- Optimized for all screen sizes
+
+## 🔒 Security Features
+
+- Clerk authentication for all protected routes
+- User ID validation on all API endpoints
+- HTTPS detection and reporting
+- Custom User-Agent to prevent blocking
+- Robots.txt compliance checking
+- MongoDB input sanitization
+
+## 🚀 Production Deployment
+
+### Backend Deployment (Heroku, Render, etc.)
+```bash
+npm install -g heroku-cli
+heroku login
+heroku create your-app-name
+heroku config:set MONGODB_URI=your_uri
+heroku config:set CLERK_SECRET_KEY=your_key
+git push heroku main
 ```
 
-### GET `/health`
-Health check endpoint for the backend.
+### Frontend Deployment (Vercel, Netlify, etc.)
+```bash
+npm run build
+# Deploy the 'build' folder
+```
 
-## Backend (server.js)
+## 🛠️ Development Tips
 
-### Key Features:
-- **Web Scraping**: Uses `axios` to fetch web pages and `cheerio` to parse HTML
-- **CORS**: Enabled to allow cross-origin requests from the React frontend
-- **Error Handling**: Comprehensive error messages for network issues
-- **User Agent**: Includes browser user agent to avoid blocking
-- **Timeout Protection**: 10-second timeout for requests
+### Adding New Audit Metrics
+Edit `backend/utils/seoScorer.js` to add scoring rules.
 
-### Main Endpoint Flow:
-1. Receives URL from frontend
-2. Fetches the webpage with axios
-3. Parses HTML with cheerio
-4. Extracts:
-   - Page title from `<title>` tag
-   - Meta description from `<meta name="description">` tag
-   - Counts all `<h1>` elements
-   - Identifies all `<img>` tags without alt attributes
-5. Returns results as JSON
+### Customizing Theme Colors
+Edit `frontend/tailwind.config.js` to change the Indigo primary color (#4F46E5).
 
-## Frontend (App.js)
+### Adding Dashboard Cards
+Create new cards in `frontend/src/components/Dashboard.jsx` using the Bento grid pattern.
 
-### Components & Features:
-- **URL Input Form**: Accept website URLs with validation
-- **Auto-URL Correction**: Automatically adds https:// if missing
-- **Loading State**: Shows "Scanning..." while processing
-- **Results Display**: 
-  - **Metrics Section**: Title, description, H1 count with visual indicators
-  - **Images Section**: Lists images without alt tags with pagination
-- **Error Handling**: User-friendly error messages
-- **Tailwind Styling**: Professional, responsive design
+## 📈 Performance Optimization
 
-### Key Technologies:
-- **React 18**: Modern hooks-based component
-- **Axios**: HTTP client for API calls
-- **Tailwind CSS**: Utility-first CSS framework
-- **Responsive Design**: Works on mobile, tablet, and desktop
+- 24-hour caching reduces API calls
+- MongoDB indexing on userId and URL
+- Responsive image handling
+- Lazy loading of audit history
+- Optimized Recharts rendering
 
-## Tailwind CSS Integration
+## 🐛 Troubleshooting
 
-Tailwind CSS is configured with:
-- `tailwind.config.js`: Customization and plugin configuration
-- `postcss.config.js`: PostCSS processing for Tailwind
-- `src/index.css`: Imports Tailwind directives (@tailwind)
+### MongoDB Connection Error
+- Verify connection string in `.env`
+- Check IP whitelist in MongoDB Atlas
+- Ensure database exists
 
-## Development
-
-### Adding New Features
-
-1. **Backend**: Add new scraping logic to `backend/server.js` in the `/api/audit` endpoint
-2. **Frontend**: Update `frontend/src/App.js` to display new metrics in the results section
-
-### Debugging
-
-- **Backend Logs**: Check console output from `npm run server`
-- **Frontend Logs**: Check browser DevTools console
-- **Network Issues**: Use browser DevTools Network tab to inspect API calls
-
-## Troubleshooting
+### Clerk Authentication Issues
+- Verify publishable and secret keys
+- Check Clerk dashboard settings
+- Clear browser cookies and cache
 
 ### Port Already in Use
-If port 5000 or 3000 is in use:
 ```bash
-# Kill process using port 5000 (backend)
-# Windows:
-netstat -ano | findstr :5000
-taskkill /PID <PID> /F
-
-# macOS/Linux:
-lsof -i :5000 | grep LISTEN | awk '{print $2}' | xargs kill -9
+# Find process on port 5000
+lsof -i :5000
+# Kill process
+kill -9 <PID>
 ```
 
-### CORS Errors
-Ensure the backend server is running on port 5000 and CORS is enabled in `server.js`.
+## 📞 Support & Contribution
 
-### Dependencies Not Installing
-```bash
-rm -rf node_modules frontend/node_modules
-npm run install-all
-```
+For issues, questions, or contributions, please open an issue or pull request.
 
-## Performance Tips
+## 📄 License
 
-1. **Cache Results**: Consider storing audit results in a database
-2. **Rate Limiting**: Add rate limiting to prevent abuse
-3. **Database Storage**: Store audit history for comparison
-4. **Background Jobs**: Use job queues for large-scale scanning
+ISC Licensed. See LICENSE file for details.
 
-## Future Enhancements
+---
 
-- [ ] User authentication and saved reports
-- [ ] Audit history and progress tracking
-- [ ] More detailed SEO metrics (canonical tags, structured data, etc.)
-- [ ] Export reports as PDF
-- [ ] Competitor analysis
+**Built with ❤️ for SEO Excellence**
 - [ ] Performance metrics (Lighthouse integration)
 
 ## License
