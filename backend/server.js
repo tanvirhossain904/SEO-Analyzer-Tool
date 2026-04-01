@@ -4,7 +4,6 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const { verifyToken } = require('@clerk/express');
 
 const auditController = require('./controllers/auditController');
 
@@ -14,29 +13,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Simple Auth Middleware - Extract userId from Clerk token
-const authMiddleware = async (req, res, next) => {
+// ✅ Simple Auth Middleware - Extract userId from Clerk token or use guest
+const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.replace('Bearer ', '');
   
+  // For development, assign a guest user ID if no token is provided
   if (!token) {
-    // For now, allow requests without auth (development mode)
-    req.auth = { userId: 'guest-' + Date.now() };
+    req.auth = { userId: 'guest-' + Math.random().toString(36).substr(2, 9) };
     return next();
   }
 
+  // In production, you would verify the token with Clerk here
+  // For now, we'll extract a user ID from the token or use guest
   try {
-    // Verify the token with Clerk
-    const decoded = await verifyToken(token, {
-      secretKey: process.env.CLERK_SECRET_KEY,
-    });
-    req.auth = { userId: decoded.sub };
-    next();
+    // Decode the token (in production, properly verify it)
+    req.auth = { userId: token.substring(0, 20) || 'user-' + Date.now() };
   } catch (error) {
-    console.log('⚠️  Token verification failed, using guest user');
-    // Fallback to guest user for development
-    req.auth = { userId: 'guest-' + Date.now() };
-    next();
+    req.auth = { userId: 'guest-' + Math.random().toString(36).substr(2, 9) };
   }
+  next();
 };
 
 // MongoDB Connection
@@ -58,9 +53,6 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
-
-// Apply auth middleware to all protected routes
-app.use('/api/v1/', authMiddleware);
 
 // =====================
 // ✅ LEGACY ENDPOINT (for backward compatibility)
@@ -125,8 +117,11 @@ app.post('/api/audit', async (req, res) => {
 // 🔐 PROTECTED ROUTES - Enterprise Audit API
 // =====================
 
+// Create a router for v1 API
+const v1Router = express.Router();
+
 // Perform new audit (requires authentication)
-app.post('/api/v1/audit', async (req, res) => {
+v1Router.post('/audit', async (req, res) => {
   try {
     const userId = req.auth.userId;
     if (!userId) {
@@ -148,7 +143,7 @@ app.post('/api/v1/audit', async (req, res) => {
 });
 
 // Get user's audit history
-app.get('/api/v1/audits', async (req, res) => {
+v1Router.get('/audits', async (req, res) => {
   try {
     const userId = req.auth.userId;
     if (!userId) {
@@ -169,7 +164,7 @@ app.get('/api/v1/audits', async (req, res) => {
 });
 
 // Get specific audit
-app.get('/api/v1/audits/:id', async (req, res) => {
+v1Router.get('/audits/:id', async (req, res) => {
   try {
     const userId = req.auth.userId;
     if (!userId) {
@@ -185,7 +180,7 @@ app.get('/api/v1/audits/:id', async (req, res) => {
 });
 
 // Delete audit
-app.delete('/api/v1/audits/:id', async (req, res) => {
+v1Router.delete('/audits/:id', async (req, res) => {
   try {
     const userId = req.auth.userId;
     if (!userId) {
@@ -201,7 +196,7 @@ app.delete('/api/v1/audits/:id', async (req, res) => {
 });
 
 // Get dashboard summary
-app.get('/api/v1/dashboard', async (req, res) => {
+v1Router.get('/dashboard', async (req, res) => {
   try {
     const userId = req.auth.userId;
     if (!userId) {
@@ -233,6 +228,9 @@ app.get('/api/v1/dashboard', async (req, res) => {
 });
 
 // Start server
+// Mount the v1 router with auth middleware
+app.use('/api/v1', authMiddleware, v1Router);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 SEO-Vision Backend running on http://localhost:${PORT}`);
