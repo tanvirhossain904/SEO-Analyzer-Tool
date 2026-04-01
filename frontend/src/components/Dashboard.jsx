@@ -25,34 +25,70 @@ const Dashboard = () => {
     setResult(null);
 
     try {
+      // Ensure URL starts with a protocol
       let auditUrl = url;
       if (!auditUrl.startsWith('http://') && !auditUrl.startsWith('https://')) {
         auditUrl = 'https://' + auditUrl;
       }
 
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      console.log('API URL:', apiUrl);
+      console.log('Audit URL:', auditUrl);
+      
+      // Get the auth token from Clerk
+      let token = '';
+      if (user) {
+        try {
+          token = await user.getIdToken();
+          console.log('Clerk token obtained');
+        } catch (tokenErr) {
+          console.warn('Could not get Clerk token:', tokenErr.message);
+          token = 'anonymous';
+        }
+      } else {
+        console.warn('User not authenticated, using guest mode');
+        token = 'guest';
+      }
+
       const res = await axios.post(`${apiUrl}/api/v1/audit`, 
         { url: auditUrl },
         {
           timeout: 15000,
           headers: {
-            Authorization: `Bearer ${await user.getIdToken()}`,
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
         }
       );
+      console.log('Audit successful:', res.data);
       setResult(res.data);
       setError(null);
     } catch (err) {
+      console.error('Full error object:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      console.error('Error response:', err.response);
+      
       let errorMessage = 'Error connecting to server.';
+      
       if (err.code === 'ECONNABORTED') {
-        errorMessage = 'Request timeout. Please try again.';
-      } else if (err.message === 'Network Error') {
-        errorMessage = 'Cannot connect to backend server.';
+        errorMessage = 'Request timeout. Server took too long to respond.';
+      } else if (err.code === 'ERR_NETWORK') {
+        errorMessage = 'Network error. Check if backend server is running on ' + (process.env.REACT_APP_API_URL || 'http://localhost:5000');
+      } else if (err.message.includes('ERR_INVALID_URL')) {
+        errorMessage = 'Invalid URL format.';
       } else if (err.response?.data?.error) {
         errorMessage = err.response.data.error;
       } else if (err.response?.status === 500) {
-        errorMessage = 'Server error. Please try another URL.';
+        errorMessage = 'Server error: ' + (err.response.data?.error || 'Please try again');
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Authentication failed. Please sign in again.';
+      } else if (err.response?.status === 400) {
+        errorMessage = 'Bad request: ' + (err.response.data?.error || 'Invalid URL');
+      } else if (!err.response) {
+        errorMessage = 'Cannot connect to server. Make sure backend is running.';
       }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);
