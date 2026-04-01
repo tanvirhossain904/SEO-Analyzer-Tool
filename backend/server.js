@@ -4,15 +4,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
 const mongoose = require('mongoose');
-
-let clerkMiddleware;
-try {
-  const { ClerkExpressWithAuth } = require('@clerk/express');
-  clerkMiddleware = ClerkExpressWithAuth();
-} catch (e) {
-  console.warn('⚠️  Clerk middleware not available, proceeding without auth');
-  clerkMiddleware = (req, res, next) => next();
-}
+const { verifyToken } = require('@clerk/express');
 
 const auditController = require('./controllers/auditController');
 
@@ -21,7 +13,31 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(clerkMiddleware);
+
+// ✅ Simple Auth Middleware - Extract userId from Clerk token
+const authMiddleware = async (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  
+  if (!token) {
+    // For now, allow requests without auth (development mode)
+    req.auth = { userId: 'guest-' + Date.now() };
+    return next();
+  }
+
+  try {
+    // Verify the token with Clerk
+    const decoded = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
+    req.auth = { userId: decoded.sub };
+    next();
+  } catch (error) {
+    console.log('⚠️  Token verification failed, using guest user');
+    // Fallback to guest user for development
+    req.auth = { userId: 'guest-' + Date.now() };
+    next();
+  }
+};
 
 // MongoDB Connection
 mongoose
@@ -42,6 +58,9 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+// Apply auth middleware to all protected routes
+app.use('/api/v1/', authMiddleware);
 
 // =====================
 // ✅ LEGACY ENDPOINT (for backward compatibility)

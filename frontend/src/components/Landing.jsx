@@ -12,7 +12,6 @@ import {
   Lock,
   Gauge,
   Code,
-  Smartphone,
   Headphones,
   CheckCircle
 } from 'lucide-react';
@@ -20,7 +19,6 @@ import { useTheme } from '../contexts/ThemeContext';
 
 const Landing = () => {
   const { isSignedIn } = useUser();
-  const { isDark } = useTheme();
 
   const containerVariants = {
     hidden: { opacity: 0 },
