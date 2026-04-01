@@ -9,6 +9,15 @@ const auditController = require('./controllers/auditController');
 
 const app = express();
 
+// Log all environment variables on startup
+console.log('🔧 Environment Configuration:');
+console.log(`- NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+console.log(`- PORT: ${process.env.PORT || 5000}`);
+console.log(`- MONGODB_URI: ${process.env.MONGODB_URI ? '✅ Configured' : '❌ Not set'}`);
+console.log(`- CLERK_SECRET_KEY: ${process.env.CLERK_SECRET_KEY ? '✅ Configured' : '❌ Not set'}`);
+console.log(`- FRONTEND_URL: ${process.env.FRONTEND_URL || 'Not set (will use localhost)'}`);
+console.log('');
+
 // Middleware
 const allowedOrigins = [
   'http://localhost:3000',
@@ -261,8 +270,27 @@ v1Router.get('/dashboard', async (req, res) => {
 app.use('/api/v1', authMiddleware, v1Router);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 SEO-Vision Backend running on http://localhost:${PORT}`);
+
+const server = app.listen(PORT, () => {
+  console.log(`\n✅ SEO-Vision Backend is running!`);
+  console.log(`📍 Server URL: ${process.env.FRONTEND_URL || `http://localhost:${PORT}`}`);
   console.log(`📊 Dashboard API: http://localhost:${PORT}/api/v1/dashboard`);
   console.log(`🔍 Audit API: http://localhost:${PORT}/api/v1/audit`);
+  console.log(`❤️  Health Check: http://localhost:${PORT}/health`);
+  console.log('');
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('❌ Server Error:', error);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  console.log('\n📴 Shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
