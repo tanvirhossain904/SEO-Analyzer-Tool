@@ -1,254 +1,316 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { SignUpButton, SignInButton, useUser } from '@clerk/clerk-react';
-import { ArrowRight, BarChart3, Zap, Shield, Sparkles } from 'lucide-react';
+import { SignUpButton, useUser } from '@clerk/clerk-react';
+import { 
+  ArrowRight, 
+  BarChart3, 
+  Zap, 
+  Shield, 
+  Sparkles, 
+  TrendingUp,
+  Lock,
+  Gauge,
+  Code,
+  Smartphone,
+  Headphones,
+  CheckCircle
+} from 'lucide-react';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 const Landing = () => {
   const { isSignedIn } = useUser();
+  const { darkMode } = useContext(ThemeContext);
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
     },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: 'easeOut' },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
   };
 
   const features = [
     {
       icon: BarChart3,
       title: 'SEO Health Score',
-      description: 'Get an instant 0-100 score with detailed breakdowns',
+      description: 'Get an instant 0-100 score with detailed breakdowns and actionable insights',
     },
     {
       icon: Zap,
       title: 'Performance Metrics',
-      description: 'Monitor LCP, FCP, and overall speed performance',
+      description: 'Monitor LCP, FCP, and overall speed to stay ahead of competitors',
     },
     {
       icon: Shield,
       title: 'Security Analysis',
-      description: 'Check SSL certificates and HTTPS compliance',
+      description: 'Check SSL certificates, HTTPS compliance, and security headers',
     },
     {
       icon: Sparkles,
       title: 'Content Insights',
-      description: 'Analyze keywords, meta tags, and content structure',
+      description: 'Analyze keywords, meta tags, and content structure automatically',
+    },
+    {
+      icon: TrendingUp,
+      title: 'Historical Tracking',
+      description: 'Monitor your improvements over time with detailed audit history',
+    },
+    {
+      icon: Code,
+      title: 'Technical SEO',
+      description: 'Detect and fix technical issues that impact your rankings',
     },
   ];
 
+  const benefits = [
+    'Real-time website analysis',
+    'AI-powered recommendations',
+    '24-hour smart caching',
+    'Multi-user collaboration',
+    'PDF report generation',
+    'API access for automation',
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 text-white overflow-hidden">
-      {/* Navigation */}
-      <nav className="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center gap-3"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold">SEO-Vision</span>
-          </motion.div>
+    <div className="pt-20">
+      {/* HERO SECTION */}
+      <motion.section
+        className="py-20 px-6 text-center max-w-5xl mx-auto"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.h1
+          className="text-5xl md:text-7xl font-extrabold mb-6 dark:text-white tracking-tight"
+          variants={itemVariants}
+        >
+          Is your SEO <span className="text-blue-600">invisible?</span>
+        </motion.h1>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center gap-4"
-          >
-            {isSignedIn ? (
-              <Link
-                to="/dashboard"
-                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition-colors"
-              >
-                Dashboard
-              </Link>
-            ) : (
-              <>
-                <SignInButton mode="modal">
-                  <button className="px-6 py-2 text-indigo-300 hover:text-indigo-100 transition-colors">
-                    Sign In
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition-colors">
-                    Get Started
-                  </button>
-                </SignUpButton>
-              </>
-            )}
-          </motion.div>
-        </div>
-      </nav>
+        <motion.p
+          className="text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed"
+          variants={itemVariants}
+        >
+          Get a professional-grade audit in seconds. We analyze your metadata, headers, images, and performance to help you climb Google rankings.
+        </motion.p>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="space-y-8"
-          >
-            {/* Main Hero */}
-            <motion.div variants={itemVariants} className="text-center space-y-6">
-              <h1 className="text-6xl md:text-7xl font-black leading-tight">
-                Enterprise SEO{' '}
-                <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                  Made Simple
-                </span>
-              </h1>
-
-              <p className="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
-                Analyze your website's SEO performance with professional-grade insights.
-                Get actionable recommendations to improve rankings and visibility.
-              </p>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                {isSignedIn ? (
-                  <Link
-                    to="/dashboard"
-                    className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 rounded-lg font-bold text-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105"
-                  >
-                    Open Dashboard
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                ) : (
-                  <SignUpButton mode="modal">
-                    <button className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 rounded-lg font-bold text-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105">
-                      Start Free Trial
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </SignUpButton>
-                )}
-
-                <button className="px-8 py-4 border-2 border-slate-400 hover:border-slate-300 rounded-lg font-bold transition-colors">
-                  Learn More
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Floating Cards Animation */}
-            <motion.div
-              variants={itemVariants}
-              className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-4"
+        <motion.div className="flex gap-4 justify-center mb-20 flex-wrap" variants={itemVariants}>
+          {isSignedIn ? (
+            <Link
+              to="/dashboard"
+              className="bg-blue-600 text-white px-8 py-4 rounded-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30 flex items-center gap-2 text-lg"
             >
-              {[
-                { label: 'Audits Completed', value: '10,000+' },
-                { label: 'Average Score Improvement', value: '+23%' },
-              ].map((stat, i) => (
-                <motion.div
-                  key={i}
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-lg p-6"
-                >
-                  <p className="text-slate-400 text-sm">{stat.label}</p>
-                  <p className="text-4xl font-bold text-indigo-400">{stat.value}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
+              Go to Dashboard <ArrowRight size={20} />
+            </Link>
+          ) : (
+            <SignUpButton mode="modal">
+              <button className="bg-blue-600 text-white px-8 py-4 rounded-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30 flex items-center gap-2 text-lg">
+                Start Free Trial <ArrowRight size={20} />
+              </button>
+            </SignUpButton>
+          )}
+          <a
+            href="#features"
+            className="border-2 border-blue-600 text-blue-600 dark:text-blue-400 px-8 py-4 rounded-full font-bold hover:bg-blue-50 dark:hover:bg-slate-800 transition text-lg"
+          >
+            Learn More
+          </a>
+        </motion.div>
 
-      {/* Features Section */}
-      <section className="py-20 px-6">
+        {/* Stats Section */}
+        <motion.div
+          className="grid grid-cols-3 gap-4 md:gap-8 mt-16"
+          variants={containerVariants}
+        >
+          {[
+            { label: '500+', value: 'Active Users' },
+            { label: '50K+', value: 'Audits Run' },
+            { label: '99.9%', value: 'Uptime' },
+          ].map((stat, idx) => (
+            <motion.div key={idx} variants={itemVariants}>
+              <div className="text-3xl md:text-4xl font-bold text-blue-600">{stat.label}</div>
+              <p className="text-slate-600 dark:text-slate-400 mt-2">{stat.value}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.section>
+
+      {/* FEATURES SECTION */}
+      <section id="features" className="py-24 px-6 bg-slate-50 dark:bg-slate-900">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Powerful Features for SEO Excellence
+            <h2 className="text-5xl font-extrabold mb-4 dark:text-white">
+              Powerful Features for <span className="text-blue-600">Modern SEO</span>
             </h2>
-            <p className="text-xl text-slate-400">
-              Everything you need to optimize your website's SEO performance
+            <p className="text-xl text-slate-600 dark:text-slate-400">
+              Everything you need to optimize your website and dominate search results
             </p>
           </motion.div>
 
           <motion.div
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
             variants={containerVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
-            {features.map(({ icon: Icon, title, description }, i) => (
+            {features.map((feature, idx) => (
               <motion.div
-                key={i}
+                key={idx}
+                className="bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-lg dark:hover:shadow-blue-900/20 transition"
                 variants={itemVariants}
-                whileHover={{ translateY: -5 }}
-                className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur border border-slate-700/50 rounded-2xl p-8 hover:border-indigo-500/50 transition-all duration-300"
+                whileHover={{ y: -5 }}
               >
-                <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-6">
-                  <Icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{title}</h3>
-                <p className="text-slate-400">{description}</p>
+                <feature.icon className="w-12 h-12 text-blue-600 mb-4" />
+                <h3 className="text-xl font-bold mb-3 dark:text-white">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400">{feature.description}</p>
               </motion.div>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-6">
+      {/* HOW IT WORKS */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-5xl font-extrabold mb-4 dark:text-white">
+              How It <span className="text-blue-600">Works</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { step: '1', title: 'Enter URL', description: 'Paste your website URL into our scanner' },
+              { step: '2', title: 'Analyze', description: 'We scan your entire website in seconds' },
+              { step: '3', title: 'Get Results', description: 'Receive detailed SEO insights and recommendations' },
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                className="relative"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: idx * 0.2 }}
+                viewport={{ once: true }}
+              >
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
+                    {item.step}
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2 dark:text-white">{item.title}</h3>
+                  <p className="text-slate-600 dark:text-slate-400">{item.description}</p>
+                </div>
+                {idx < 2 && (
+                  <div className="hidden md:block absolute right-0 top-8 text-blue-600 text-3xl">→</div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BENEFITS SECTION */}
+      <section className="py-24 px-6 bg-blue-600">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-5xl font-extrabold text-white mb-8">
+                Why Choose SEOVision?
+              </h2>
+              <div className="space-y-4">
+                {benefits.map((benefit, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="flex items-center gap-3"
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: idx * 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <CheckCircle className="w-6 h-6 text-white flex-shrink-0" />
+                    <span className="text-lg text-white">{benefit}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="grid grid-cols-2 gap-4"
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+            >
+              {[
+                { icon: Gauge, label: 'Fast Scanning' },
+                { icon: Lock, label: 'Secure' },
+                { icon: TrendingUp, label: 'Accurate' },
+                { icon: Headphones, label: '24/7 Support' },
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white bg-opacity-10 backdrop-blur p-6 rounded-xl text-white text-center">
+                  <item.icon className="w-12 h-12 mx-auto mb-3" />
+                  <p className="font-semibold">{item.label}</p>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA SECTION */}
+      <section className="py-24 px-6 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur border border-indigo-500/50 rounded-2xl p-12 text-center"
+          className="max-w-2xl mx-auto"
         >
-          <h2 className="text-4xl font-bold mb-6">
-            Ready to Boost Your SEO?
+          <h2 className="text-5xl font-extrabold mb-6 dark:text-white">
+            Ready to <span className="text-blue-600">Boost Your SEO?</span>
           </h2>
-          <p className="text-xl text-slate-300 mb-8">
-            Join thousands of businesses using SEO-Vision to improve their organic rankings
+          <p className="text-xl text-slate-600 dark:text-slate-400 mb-8">
+            Get started today with a free trial. No credit card required.
           </p>
-
           {isSignedIn ? (
             <Link
               to="/dashboard"
-              className="inline-block px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold transition-colors"
+              className="inline-block bg-blue-600 text-white px-8 py-4 rounded-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30"
             >
               Go to Dashboard
             </Link>
           ) : (
             <SignUpButton mode="modal">
-              <button className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-bold transition-colors">
-                Get Started Free
+              <button className="bg-blue-600 text-white px-8 py-4 rounded-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
+                Start Free Trial
               </button>
             </SignUpButton>
           )}
         </motion.div>
       </section>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 px-6">
-        <div className="max-w-6xl mx-auto text-center text-slate-400">
-          <p>&copy; 2026 SEO-Vision. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 };

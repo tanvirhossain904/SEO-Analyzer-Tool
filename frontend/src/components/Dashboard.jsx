@@ -1,423 +1,367 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from 'recharts';
-import {
-  AlertCircle,
-  Zap,
-  Lock,
-  FileText,
-  ArrowUp,
-  Globe,
-} from 'lucide-react';
+import React, { useState, useRef, useContext } from 'react';
 import { useUser } from '@clerk/clerk-react';
+import axios from 'axios';
+import { motion } from 'framer-motion';
+import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { Download, Search, AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 const Dashboard = () => {
   const { user } = useUser();
-  const [auditData, setAuditData] = useState(null);
-  const [dashboardSummary, setDashboardSummary] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [scanning, setScanning] = useState(false);
+  const { darkMode } = useContext(ThemeContext);
   const [url, setUrl] = useState('');
-  const [error, setError] = useState('');
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const targetRef = useRef();
 
-  const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444'];
-
-  // Fetch dashboard summary on mount
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/v1/dashboard', {
-          headers: { Authorization: `Bearer ${await user?.getIdToken()}` },
-        });
-
-        if (!response.ok) throw new Error('Failed to fetch dashboard');
-        const data = await response.json();
-        setDashboardSummary(data);
-      } catch (err) {
-        console.error('Dashboard fetch error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchDashboard();
+  const handleAudit = async () => {
+    if (!url) {
+      setError('Please enter a URL');
+      return;
     }
-  }, [user]);
-
-  const handleAudit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setScanning(true);
+    setLoading(true);
+    setError(null);
+    setResult(null);
 
     try {
-      let auditUrl = url.trim();
-      if (!auditUrl.startsWith('http')) {
-        auditUrl = `https://${auditUrl}`;
+      let auditUrl = url;
+      if (!auditUrl.startsWith('http://') && !auditUrl.startsWith('https://')) {
+        auditUrl = 'https://' + auditUrl;
       }
 
-      const response = await fetch('http://localhost:5000/api/v1/audit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${await user?.getIdToken()}`,
-        },
-        body: JSON.stringify({ url: auditUrl }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Audit failed');
-      }
-
-      const data = await response.json();
-      setAuditData(data);
-      setUrl('');
+      const res = await axios.post('http://localhost:5000/api/v1/audit', 
+        { url: auditUrl },
+        {
+          timeout: 15000,
+          headers: {
+            Authorization: `Bearer ${await user.getIdToken()}`,
+          },
+        }
+      );
+      setResult(res.data);
+      setError(null);
     } catch (err) {
-      setError(err.message);
+      let errorMessage = 'Error connecting to server.';
+      if (err.code === 'ECONNABORTED') {
+        errorMessage = 'Request timeout. Please try again.';
+      } else if (err.message === 'Network Error') {
+        errorMessage = 'Cannot connect to backend server.';
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.response?.status === 500) {
+        errorMessage = 'Server error. Please try another URL.';
+      }
+      setError(errorMessage);
     } finally {
-      setScanning(false);
+      setLoading(false);
     }
   };
 
-  const scoreData = auditData
-    ? [
-        { name: 'Score', value: auditData.seoScore, fill: '#4F46E5' },
-        { name: 'Remaining', value: 100 - auditData.seoScore, fill: '#E5E7EB' },
-      ]
-    : [];
-
-  const performanceData = auditData
-    ? [
-        { name: 'LCP', value: auditData.performanceData?.lcp || 0 },
-        { name: 'FCP', value: auditData.performanceData?.fcp || 0 },
-        { name: 'Speed', value: auditData.performanceData?.speedScore || 0 },
-      ]
-    : [];
-
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
+  const handleDownloadPDF = async () => {
+    if (!targetRef.current) return;
+    try {
+      const canvas = await html2canvas(targetRef.current, { scale: 2, backgroundColor: '#ffffff' });
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save('SEO-Report.pdf');
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      setError('Failed to generate PDF');
+    }
   };
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-8 overflow-y-auto">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
-          Welcome back, {user?.firstName}!
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400">
-          Monitor and optimize your website's SEO performance
-        </p>
-      </motion.div>
-
-      {/* URL Input */}
-      <motion.form
-        onSubmit={handleAudit}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mb-8"
-      >
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="Enter website URL (e.g., example.com)"
-            className="flex-1 px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            disabled={scanning}
-          />
-          <button
-            type="submit"
-            disabled={scanning || !url.trim()}
-            className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            {scanning ? 'Scanning...' : 'Scan'}
-          </button>
-        </div>
-        {error && (
-          <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-600" />
-            <p className="text-red-600 dark:text-red-200">{error}</p>
-          </div>
-        )}
-      </motion.form>
-
-      {/* Bento Grid Dashboard */}
-      {auditData && (
+    <div className="pt-24 min-h-screen pb-12">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Header */}
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-        >
-          {/* SEO Health Score */}
-          <motion.div
-            variants={itemVariants}
-            className="lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                SEO Score
-              </h3>
-              <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-indigo-600" />
-              </div>
-            </div>
-            <div className="flex items-center justify-center mb-4">
-              <ResponsiveContainer width="100%" height={120}>
-                <PieChart>
-                  <Pie
-                    data={scoreData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={60}
-                    dataKey="value"
-                    startAngle={90}
-                    endAngle={-270}
-                  >
-                    {scoreData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-slate-900 dark:text-white">
-                {auditData.seoScore}
-              </p>
-              <p className={`text-sm font-semibold ${
-                auditData.seoScore >= 80
-                  ? 'text-green-600'
-                  : auditData.seoScore >= 60
-                  ? 'text-yellow-600'
-                  : 'text-red-600'
-              }`}>
-                Grade: {auditData.grade || 'N/A'}
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Performance Metrics */}
-          <motion.div
-            variants={itemVariants}
-            className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-5 h-5 text-amber-600" />
-              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                Performance Metrics
-              </h3>
-            </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="name" stroke="#6B7280" />
-                <YAxis stroke="#6B7280" />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#F59E0B"
-                  strokeWidth={2}
-                  dot={{ fill: '#F59E0B' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </motion.div>
-
-          {/* Security Status */}
-          <motion.div
-            variants={itemVariants}
-            className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col justify-between"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                Security
-              </h3>
-              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <Lock className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600 dark:text-slate-400">HTTPS</span>
-                <span
-                  className={`text-sm font-semibold ${
-                    auditData.securityStatus?.isHttps
-                      ? 'text-green-600'
-                      : 'text-red-600'
-                  }`}
-                >
-                  {auditData.securityStatus?.isHttps ? '✓ Secure' : '✗ Insecure'}
-                </span>
-              </div>
-              <div className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600"
-                  style={{
-                    width: auditData.securityStatus?.isHttps ? '100%' : '0%',
-                  }}
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Content Analysis */}
-          <motion.div
-            variants={itemVariants}
-            className="md:col-span-2 lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="w-5 h-5 text-blue-600" />
-              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                Content
-              </h3>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  Title Length
-                </p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">
-                  {auditData.contentAnalysis?.titleLength} chars
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
-                  Word Count
-                </p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">
-                  {auditData.contentAnalysis?.wordCount}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Meta Description */}
-          <motion.div
-            variants={itemVariants}
-            className="md:col-span-2 lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Globe className="w-5 h-5 text-purple-600" />
-              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                Meta Description
-              </h3>
-            </div>
-            <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-3 mb-2">
-              {auditData.metaDescription || 'Not found'}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {auditData.contentAnalysis?.metaLength} / 160 characters
-            </p>
-          </motion.div>
-
-          {/* H1 Status */}
-          <motion.div
-            variants={itemVariants}
-            className="md:col-span-2 lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <heading className="w-5 h-5 text-red-600" />
-              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                H1 Tags
-              </h3>
-            </div>
-            <div className="space-y-2">
-              <p className="text-2xl font-bold text-slate-900 dark:text-white">
-                {auditData.h1Count}
-              </p>
-              <p
-                className={`text-sm ${
-                  auditData.h1Count === 1
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-yellow-600 dark:text-yellow-400'
-                }`}
-              >
-                {auditData.h1Count === 0
-                  ? 'No H1 tags found'
-                  : auditData.h1Count === 1
-                  ? 'Perfect: 1 H1 tag'
-                  : `Consider using only 1 H1 tag`}
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Images without Alt */}
-          <motion.div
-            variants={itemVariants}
-            className="md:col-span-2 lg:col-span-1 bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <AlertCircle className="w-5 h-5 text-orange-600" />
-              <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-300">
-                Missing Alt Tags
-              </h3>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">
-              {auditData.imagesWithoutAlt?.length || 0}
-            </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-              {auditData.imagesWithoutAlt?.length === 0
-                ? '✓ All images have alt tags'
-                : `Images need alt text`}
-            </p>
-          </motion.div>
-        </motion.div>
-      )}
-
-      {/* Empty State */}
-      {!auditData && !loading && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          className="mb-8"
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12"
         >
-          <Globe className="w-16 h-16 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-            No audits yet
-          </h3>
+          <h1 className="text-4xl font-extrabold dark:text-white mb-2">
+            SEO Audit Dashboard
+          </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Start by entering a website URL above to begin your SEO analysis
+            Welcome back, {user?.firstName || 'User'}! Scan your website for SEO insights.
           </p>
         </motion.div>
-      )}
+
+        {/* Scanner Section */}
+        <motion.div
+          className="bg-white dark:bg-slate-800 rounded-xl border dark:border-slate-700 p-8 mb-8 shadow-lg"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="flex gap-4 flex-col md:flex-row">
+            <input
+              type="text"
+              placeholder="Enter website URL (e.g., example.com)"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAudit()}
+              className="flex-1 px-6 py-3 border dark:border-slate-600 dark:bg-slate-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
+            <button
+              onClick={handleAudit}
+              disabled={loading}
+              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 flex items-center gap-2 whitespace-nowrap"
+            >
+              {loading ? (
+                <>
+                  <Loader size={20} className="animate-spin" />
+                  Scanning...
+                </>
+              ) : (
+                <>
+                  <Search size={20} />
+                  Start Audit
+                </>
+              )}
+            </button>
+          </div>
+          {error && (
+            <motion.div
+              className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg flex gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <AlertCircle size={20} className="flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </motion.div>
+          )}
+        </motion.div>
+
+        {/* Results Section */}
+        {result && (
+          <motion.div
+            ref={targetRef}
+            className="space-y-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {/* PDF Download Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleDownloadPDF}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center gap-2 shadow-lg"
+              >
+                <Download size={20} />
+                Save PDF Report
+              </button>
+            </div>
+
+            {/* Main Score Card */}
+            <motion.div
+              className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-xl p-8 shadow-xl"
+              whileHover={{ scale: 1.02 }}
+            >
+              <h2 className="text-sm font-semibold opacity-90 mb-4">SEO HEALTH SCORE</h2>
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <span className="text-6xl font-extrabold">{result.seoScore || 0}</span>
+                  <span className="text-2xl opacity-90">/100</span>
+                </div>
+                <div className="text-sm opacity-75">
+                  <p>Grade: <span className="font-bold text-lg">{result.grade || 'N/A'}</span></p>
+                </div>
+              </div>
+              <div className="mt-4 text-sm opacity-75">
+                <p>URL: {result.url}</p>
+                <p>Scanned: {new Date(result.scannedAt).toLocaleString()}</p>
+              </div>
+            </motion.div>
+
+            {/* Metrics Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Title */}
+              <motion.div
+                className="bg-white dark:bg-slate-800 p-6 rounded-xl border dark:border-slate-700 shadow-lg"
+                whileHover={{ y: -5 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold dark:text-white">Page Title</h3>
+                  {result.title ? (
+                    <CheckCircle size={20} className="text-green-600" />
+                  ) : (
+                    <AlertCircle size={20} className="text-red-600" />
+                  )}
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                  {result.title || 'No title found'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                  {result.title?.length || 0} characters
+                </p>
+              </motion.div>
+
+              {/* Meta Description */}
+              <motion.div
+                className="bg-white dark:bg-slate-800 p-6 rounded-xl border dark:border-slate-700 shadow-lg"
+                whileHover={{ y: -5 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold dark:text-white">Meta Description</h3>
+                  {result.metaDescription ? (
+                    <CheckCircle size={20} className="text-green-600" />
+                  ) : (
+                    <AlertCircle size={20} className="text-red-600" />
+                  )}
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
+                  {result.metaDescription || 'No meta description found'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                  {result.metaDescription?.length || 0} characters
+                </p>
+              </motion.div>
+
+              {/* H1 Tags */}
+              <motion.div
+                className="bg-white dark:bg-slate-800 p-6 rounded-xl border dark:border-slate-700 shadow-lg"
+                whileHover={{ y: -5 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold dark:text-white">H1 Tags</h3>
+                  {result.h1Count === 1 ? (
+                    <CheckCircle size={20} className="text-green-600" />
+                  ) : (
+                    <AlertCircle size={20} className="text-yellow-600" />
+                  )}
+                </div>
+                <p className="text-3xl font-bold text-blue-600 mb-2">{result.h1Count || 0}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  {result.h1Count === 1 ? 'Perfect: One H1 tag' : result.h1Count === 0 ? 'Warning: No H1 tags found' : `Warning: ${result.h1Count} H1 tags found`}
+                </p>
+              </motion.div>
+
+              {/* Missing Alt Tags */}
+              <motion.div
+                className="bg-white dark:bg-slate-800 p-6 rounded-xl border dark:border-slate-700 shadow-lg"
+                whileHover={{ y: -5 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold dark:text-white">Missing Alt Tags</h3>
+                  {result.missingAltTags?.length === 0 ? (
+                    <CheckCircle size={20} className="text-green-600" />
+                  ) : (
+                    <AlertCircle size={20} className="text-orange-600" />
+                  )}
+                </div>
+                <p className="text-3xl font-bold text-orange-600 mb-2">
+                  {result.missingAltTags?.length || 0}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  {result.missingAltTags?.length === 0
+                    ? 'All images have alt tags'
+                    : `${result.missingAltTags.length} images need alt tags`}
+                </p>
+              </motion.div>
+
+              {/* HTTPS Status */}
+              <motion.div
+                className="bg-white dark:bg-slate-800 p-6 rounded-xl border dark:border-slate-700 shadow-lg"
+                whileHover={{ y: -5 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold dark:text-white">HTTPS Status</h3>
+                  {result.isHttps ? (
+                    <CheckCircle size={20} className="text-green-600" />
+                  ) : (
+                    <AlertCircle size={20} className="text-red-600" />
+                  )}
+                </div>
+                <p className={`text-lg font-bold ${result.isHttps ? 'text-green-600' : 'text-red-600'}`}>
+                  {result.isHttps ? 'Secure' : 'Not Secure'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                  {result.isHttps ? 'SSL certificate is valid' : 'HTTPS not enabled'}
+                </p>
+              </motion.div>
+
+              {/* Content Length */}
+              <motion.div
+                className="bg-white dark:bg-slate-800 p-6 rounded-xl border dark:border-slate-700 shadow-lg"
+                whileHover={{ y: -5 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold dark:text-white">Content Length</h3>
+                  <Clock size={20} className="text-slate-400" />
+                </div>
+                <p className="text-3xl font-bold text-slate-600 dark:text-slate-300 mb-2">
+                  {result.contentLength?.toLocaleString() || 0}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">Total words on page</p>
+              </motion.div>
+
+              {/* Performance Score */}
+              <motion.div
+                className="bg-white dark:bg-slate-800 p-6 rounded-xl border dark:border-slate-700 shadow-lg"
+                whileHover={{ y: -5 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold dark:text-white">Performance</h3>
+                  <CheckCircle size={20} className="text-blue-600" />
+                </div>
+                <p className="text-3xl font-bold text-blue-600 mb-2">
+                  {result.performanceScore || 'N/A'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">Overall speed score</p>
+              </motion.div>
+            </div>
+
+            {/* Recommendations */}
+            {result.recommendations && result.recommendations.length > 0 && (
+              <motion.div
+                className="bg-white dark:bg-slate-800 rounded-xl border dark:border-slate-700 p-8 shadow-lg"
+                whileHover={{ y: -2 }}
+              >
+                <h3 className="text-2xl font-bold mb-6 dark:text-white">Recommendations</h3>
+                <div className="space-y-4">
+                  {result.recommendations.map((rec, idx) => (
+                    <div
+                      key={idx}
+                      className="flex gap-4 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border-l-4 border-blue-600"
+                    >
+                      <div className="flex-shrink-0 text-blue-600 mt-1">
+                        <AlertCircle size={20} />
+                      </div>
+                      <div>
+                        <p className="font-semibold dark:text-white">{rec}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
+        {/* Empty State */}
+        {!result && !loading && (
+          <motion.div
+            className="text-center py-16"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="text-slate-400 mb-4">
+              <Search size={64} className="mx-auto" />
+            </div>
+            <h3 className="text-2xl font-bold dark:text-white mb-2">No Audits Yet</h3>
+            <p className="text-slate-600 dark:text-slate-400">
+              Enter a URL above and start your first SEO audit!
+            </p>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 };
