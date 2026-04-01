@@ -4,7 +4,16 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const { ClerkExpressWithAuth } = require('@clerk/express');
+
+let clerkMiddleware;
+try {
+  const { ClerkExpressWithAuth } = require('@clerk/express');
+  clerkMiddleware = ClerkExpressWithAuth();
+} catch (e) {
+  console.warn('⚠️  Clerk middleware not available, proceeding without auth');
+  clerkMiddleware = (req, res, next) => next();
+}
+
 const auditController = require('./controllers/auditController');
 
 const app = express();
@@ -12,19 +21,16 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(ClerkExpressWithAuth());
+app.use(clerkMiddleware);
 
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/seo-vision', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/seo-vision')
   .then(() => {
     console.log('✅ MongoDB connected successfully');
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err.message);
     // Continue running even if MongoDB fails (for development)
   });
 
