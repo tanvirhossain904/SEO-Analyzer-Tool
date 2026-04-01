@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { SignUpButton, useUser } from '@clerk/clerk-react';
@@ -16,11 +16,11 @@ import {
   Headphones,
   CheckCircle
 } from 'lucide-react';
-import { ThemeContext } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Landing = () => {
   const { isSignedIn } = useUser();
-  const { darkMode } = useContext(ThemeContext);
+  const { isDark } = useTheme();
 
   const containerVariants = {
     hidden: { opacity: 0 },

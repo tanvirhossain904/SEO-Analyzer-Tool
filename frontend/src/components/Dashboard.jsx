@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -6,11 +6,11 @@ import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tool
 import { Download, Search, AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { ThemeContext } from '../contexts/ThemeContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 const Dashboard = () => {
   const { user } = useUser();
-  const { darkMode } = useContext(ThemeContext);
+  const { isDark } = useTheme();
   const [url, setUrl] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);

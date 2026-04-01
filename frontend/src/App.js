@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
-import { ThemeContext } from './contexts/ThemeContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Landing from './components/Landing';
 import Dashboard from './components/Dashboard';
 import Navbar from './components/Navbar';
@@ -10,22 +10,6 @@ import Footer from './components/Footer';
 const publishableKey = process.env.REACT_APP_CLERK_PUBLISHABLE_KEY;
 
 const App = () => {
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(darkMode));
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
-
-  const toggleDarkMode = () => setDarkMode(!darkMode);
-
   if (!publishableKey) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-red-50">
@@ -40,9 +24,9 @@ const App = () => {
 
   return (
     <ClerkProvider publishableKey={publishableKey}>
-      <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
+      <ThemeProvider>
         <BrowserRouter>
-          <div className={`min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300 ${darkMode ? 'dark' : ''}`}>
+          <div className="min-h-screen bg-white dark:bg-slate-950 transition-colors duration-300">
             <Navbar />
             <Routes>
               <Route path="/" element={<Landing />} />
@@ -66,7 +50,7 @@ const App = () => {
             <Footer />
           </div>
         </BrowserRouter>
-      </ThemeContext.Provider>
+      </ThemeProvider>
     </ClerkProvider>
   );
 };
