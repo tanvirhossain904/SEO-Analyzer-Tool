@@ -30,7 +30,8 @@ const Dashboard = () => {
         auditUrl = 'https://' + auditUrl;
       }
 
-      const res = await axios.post('http://localhost:5000/api/v1/audit', 
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+      const res = await axios.post(`${apiUrl}/api/v1/audit`, 
         { url: auditUrl },
         {
           timeout: 15000,
