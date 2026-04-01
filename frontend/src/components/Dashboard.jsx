@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { Download, Search, AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { useTheme } from '../contexts/ThemeContext';
 
 const Dashboard = () => {
   const { user } = useUser();
@@ -202,16 +201,16 @@ const Dashboard = () => {
               <h2 className="text-sm font-semibold opacity-90 mb-4">SEO HEALTH SCORE</h2>
               <div className="flex items-end gap-4">
                 <div className="flex-1">
-                  <span className="text-6xl font-extrabold">{result.seoScore || 0}</span>
+                  <span className="text-6xl font-extrabold">{result?.seoScore || 0}</span>
                   <span className="text-2xl opacity-90">/100</span>
                 </div>
                 <div className="text-sm opacity-75">
-                  <p>Grade: <span className="font-bold text-lg">{result.grade || 'N/A'}</span></p>
+                  <p>Grade: <span className="font-bold text-lg">{result?.grade || 'N/A'}</span></p>
                 </div>
               </div>
               <div className="mt-4 text-sm opacity-75">
-                <p>URL: {result.url}</p>
-                <p>Scanned: {new Date(result.scannedAt).toLocaleString()}</p>
+                <p>URL: {result?.url || 'N/A'}</p>
+                <p>Scanned: {result?.scannedAt ? new Date(result.scannedAt).toLocaleString() : 'N/A'}</p>
               </div>
             </motion.div>
 
@@ -224,17 +223,17 @@ const Dashboard = () => {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold dark:text-white">Page Title</h3>
-                  {result.title ? (
+                  {result?.title ? (
                     <CheckCircle size={20} className="text-green-600" />
                   ) : (
                     <AlertCircle size={20} className="text-red-600" />
                   )}
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                  {result.title || 'No title found'}
+                  {result?.title || 'No title found'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                  {result.title?.length || 0} characters
+                  {result?.title ? result.title.length : 0} characters
                 </p>
               </motion.div>
 
@@ -245,17 +244,17 @@ const Dashboard = () => {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold dark:text-white">Meta Description</h3>
-                  {result.metaDescription ? (
+                  {result?.metaDescription ? (
                     <CheckCircle size={20} className="text-green-600" />
                   ) : (
                     <AlertCircle size={20} className="text-red-600" />
                   )}
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-                  {result.metaDescription || 'No meta description found'}
+                  {result?.metaDescription || 'No meta description found'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                  {result.metaDescription?.length || 0} characters
+                  {result?.metaDescription ? result.metaDescription.length : 0} characters
                 </p>
               </motion.div>
 
@@ -266,15 +265,15 @@ const Dashboard = () => {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold dark:text-white">H1 Tags</h3>
-                  {result.h1Count === 1 ? (
+                  {result?.h1Count === 1 ? (
                     <CheckCircle size={20} className="text-green-600" />
                   ) : (
                     <AlertCircle size={20} className="text-yellow-600" />
                   )}
                 </div>
-                <p className="text-3xl font-bold text-blue-600 mb-2">{result.h1Count || 0}</p>
+                <p className="text-3xl font-bold text-blue-600 mb-2">{result?.h1Count || 0}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-500">
-                  {result.h1Count === 1 ? 'Perfect: One H1 tag' : result.h1Count === 0 ? 'Warning: No H1 tags found' : `Warning: ${result.h1Count} H1 tags found`}
+                  {result?.h1Count === 1 ? 'Perfect: One H1 tag' : result?.h1Count === 0 ? 'Warning: No H1 tags found' : `Warning: ${result.h1Count} H1 tags found`}
                 </p>
               </motion.div>
 
@@ -285,19 +284,19 @@ const Dashboard = () => {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold dark:text-white">Missing Alt Tags</h3>
-                  {result.missingAltTags?.length === 0 ? (
+                  {!result?.imagesWithoutAlt || result.imagesWithoutAlt.length === 0 ? (
                     <CheckCircle size={20} className="text-green-600" />
                   ) : (
                     <AlertCircle size={20} className="text-orange-600" />
                   )}
                 </div>
                 <p className="text-3xl font-bold text-orange-600 mb-2">
-                  {result.missingAltTags?.length || 0}
+                  {result?.imagesWithoutAlt?.length || 0}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500">
-                  {result.missingAltTags?.length === 0
+                  {!result?.imagesWithoutAlt || result.imagesWithoutAlt.length === 0
                     ? 'All images have alt tags'
-                    : `${result.missingAltTags.length} images need alt tags`}
+                    : `${result.imagesWithoutAlt.length} images need alt tags`}
                 </p>
               </motion.div>
 
@@ -308,17 +307,17 @@ const Dashboard = () => {
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold dark:text-white">HTTPS Status</h3>
-                  {result.isHttps ? (
+                  {result?.securityStatus?.isHttps ? (
                     <CheckCircle size={20} className="text-green-600" />
                   ) : (
                     <AlertCircle size={20} className="text-red-600" />
                   )}
                 </div>
-                <p className={`text-lg font-bold ${result.isHttps ? 'text-green-600' : 'text-red-600'}`}>
-                  {result.isHttps ? 'Secure' : 'Not Secure'}
+                <p className={`text-lg font-bold ${result?.securityStatus?.isHttps ? 'text-green-600' : 'text-red-600'}`}>
+                  {result?.securityStatus?.isHttps ? 'Secure' : 'Not Secure'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500 mt-2">
-                  {result.isHttps ? 'SSL certificate is valid' : 'HTTPS not enabled'}
+                  {result?.securityStatus?.isHttps ? 'SSL certificate is valid' : 'HTTPS not enabled'}
                 </p>
               </motion.div>
 
@@ -332,7 +331,7 @@ const Dashboard = () => {
                   <Clock size={20} className="text-slate-400" />
                 </div>
                 <p className="text-3xl font-bold text-slate-600 dark:text-slate-300 mb-2">
-                  {result.contentLength?.toLocaleString() || 0}
+                  {(result?.contentAnalysis?.wordCount || 0).toLocaleString()}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500">Total words on page</p>
               </motion.div>
@@ -347,14 +346,14 @@ const Dashboard = () => {
                   <CheckCircle size={20} className="text-blue-600" />
                 </div>
                 <p className="text-3xl font-bold text-blue-600 mb-2">
-                  {result.performanceScore || 'N/A'}
+                  {result?.performanceData?.speedScore || 'N/A'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-500">Overall speed score</p>
               </motion.div>
             </div>
 
             {/* Recommendations */}
-            {result.recommendations && result.recommendations.length > 0 && (
+            {result?.recommendations && Array.isArray(result.recommendations) && result.recommendations.length > 0 && (
               <motion.div
                 className="bg-white dark:bg-slate-800 rounded-xl border dark:border-slate-700 p-8 shadow-lg"
                 whileHover={{ y: -2 }}
@@ -370,7 +369,7 @@ const Dashboard = () => {
                         <AlertCircle size={20} />
                       </div>
                       <div>
-                        <p className="font-semibold dark:text-white">{rec}</p>
+                        <p className="font-semibold dark:text-white">{typeof rec === 'string' ? rec : JSON.stringify(rec)}</p>
                       </div>
                     </div>
                   ))}

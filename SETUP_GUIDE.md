@@ -35,8 +35,8 @@ In `c:\Projects\SEO-Analyzer-Tool\.env`:
 MONGODB_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/seo-vision?retryWrites=true&w=majority
 
 # Clerk Keys (from Clerk Dashboard)
-CLERK_SECRET_KEY=sk_live_xxxxxxxxxxxxxxxxxxxxxxxx
-VITE_CLERK_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxxxxxxxxxxxxx
+CLERK_SECRET_KEY=sk_test_your_secret_key_here
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_public_key_here
 
 # Server Configuration
 PORT=5000
@@ -49,7 +49,7 @@ In `c:\Projects\SEO-Analyzer-Tool\frontend\.env.local`:
 
 ```env
 # Only Publishable Key needed for frontend
-VITE_CLERK_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxxxxxxxxxxxxx
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_your_public_key_here
 ```
 
 ### Getting Your Keys
