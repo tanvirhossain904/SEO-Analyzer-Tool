@@ -15,7 +15,6 @@ import {
   Headphones,
   CheckCircle
 } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
 
 const Landing = () => {
   const { isSignedIn } = useUser();

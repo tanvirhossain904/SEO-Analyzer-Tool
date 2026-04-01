@@ -29,9 +29,9 @@ const Footer = () => {
             <h4 className="font-bold mb-4 dark:text-white">Product</h4>
             <ul className="space-y-2 text-slate-600 dark:text-slate-400">
               <li><Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Features</Link></li>
-              <li><a href="#pricing" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Pricing</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Documentation</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">API</a></li>
+              <li><button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition text-left">Pricing</button></li>
+              <li><button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition text-left">Documentation</button></li>
+              <li><button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition text-left">API</button></li>
             </ul>
           </div>
 
@@ -39,10 +39,10 @@ const Footer = () => {
           <div>
             <h4 className="font-bold mb-4 dark:text-white">Company</h4>
             <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">About</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Blog</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Jobs</a></li>
-              <li><a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Contact</a></li>
+              <li><button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition text-left">About</button></li>
+              <li><button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition text-left">Blog</button></li>
+              <li><button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition text-left">Jobs</button></li>
+              <li><button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition text-left">Contact</button></li>
             </ul>
           </div>
 
@@ -50,15 +50,15 @@ const Footer = () => {
           <div>
             <h4 className="font-bold mb-4 dark:text-white">Follow Us</h4>
             <div className="flex gap-4">
-              <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
+              <button onClick={(e) => e.preventDefault()} className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
                 <Twitter size={20} />
-              </a>
-              <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
+              </button>
+              <button onClick={(e) => e.preventDefault()} className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
                 <Linkedin size={20} />
-              </a>
-              <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
+              </button>
+              <button onClick={(e) => e.preventDefault()} className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition">
                 <Github size={20} />
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -72,8 +72,8 @@ const Footer = () => {
             © {currentYear} SEOVision. All rights reserved.
           </p>
           <div className="flex gap-6 text-slate-600 dark:text-slate-400">
-            <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Privacy Policy</a>
-            <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Terms of Service</a>
+            <button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition">Privacy Policy</button>
+            <button onClick={(e) => e.preventDefault()} className="hover:text-blue-600 dark:hover:text-blue-400 transition">Terms of Service</button>
           </div>
         </div>
       </div>
