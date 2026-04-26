@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Trash2, ExternalLink, Calendar, TrendingUp } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 const History = () => {
   const { user } = useUser();
   const [audits, setAudits] = useState([]);
@@ -13,7 +15,7 @@ const History = () => {
     const fetchAudits = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:5000/api/v1/audits', {
+        const response = await fetch(`${API_URL}/api/v1/audits`, {
           headers: { Authorization: `Bearer ${await user?.getIdToken()}` },
         });
 
@@ -36,7 +38,7 @@ const History = () => {
     if (!window.confirm('Are you sure you want to delete this audit?')) return;
 
     try {
-      const response = await fetch(`http://localhost:5000/api/v1/audits/${auditId}`, {
+      const response = await fetch(`${API_URL}/api/v1/audits/${auditId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${await user?.getIdToken()}` },
       });
