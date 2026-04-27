@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useUser, useAuth } from '@clerk/clerk-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -15,6 +15,28 @@ const Dashboard = () => {
   const [coldStart, setColdStart] = useState(false);
   const [error, setError] = useState(null);
   const targetRef = useRef();
+
+  // On mount, load the user's most recent audit so a page refresh doesn't wipe the view.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+        const token = await getToken();
+        if (!token) return;
+        const res = await axios.get(`${apiUrl}/api/v1/audits?limit=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!cancelled && res.data?.audits?.length) {
+          setResult(res.data.audits[0]);
+        }
+      } catch {
+        // Silent — empty dashboard is a valid first-load state.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, getToken]);
 
   const handleAudit = async () => {
     if (!url) {
