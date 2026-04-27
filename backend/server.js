@@ -1,11 +1,13 @@
 require('dotenv').config();
 const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
+const { clerkMiddleware, getAuth } = require('@clerk/express');
 
 const auditController = require('./controllers/auditController');
+const { assertUrlIsPublic } = require('./utils/urlGuard');
 
 const app = express();
 
@@ -18,57 +20,48 @@ console.log(`- CLERK_SECRET_KEY: ${process.env.CLERK_SECRET_KEY ? '✅ Configure
 console.log(`- FRONTEND_URL: ${process.env.FRONTEND_URL || 'Not set (will use localhost)'}`);
 console.log('');
 
-// Middleware
+app.set('trust proxy', 1);
+app.use(helmet());
+
 const allowedOrigins = [
   'http://localhost:3000',
-  'http://localhost:3002',
   'http://localhost:3001',
-  'https://*.vercel.app', // Will match any Vercel deployment
-  process.env.FRONTEND_URL, // For production frontend URL
-];
+  'http://localhost:3002',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+  origin(origin, callback) {
     if (!origin) return callback(null, true);
-    
-    // Check if origin matches allowed patterns
-    const isAllowed = allowedOrigins.some(allowed => {
-      if (allowed.includes('*')) {
-        const pattern = allowed.replace('*.', '').replace('*', '.*');
-        return new RegExp(pattern).test(origin);
-      }
-      return origin === allowed;
-    });
-    
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
   },
-  credentials: true
+  credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '32kb' }));
 
-// ✅ Simple Auth Middleware - Extract userId from Clerk token or use guest
+const clerkAuth = clerkMiddleware({
+  secretKey: process.env.CLERK_SECRET_KEY,
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+});
+
+const auditLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Auth middleware runs first, so req.auth.userId is always set here.
+  keyGenerator: (req) => req.auth.userId,
+  message: { error: 'Too many audits this hour. Try again later.' },
+});
+
+// Resolve the real Clerk user ID for the request, or 401 if unauthenticated.
 const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  
-  // For development, assign a guest user ID if no token is provided
-  if (!token) {
-    req.auth = { userId: 'guest-' + Math.random().toString(36).substr(2, 9) };
-    return next();
+  const { userId } = getAuth(req);
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-
-  // In production, you would verify the token with Clerk here
-  // For now, we'll extract a user ID from the token or use guest
-  try {
-    // Decode the token (in production, properly verify it)
-    req.auth = { userId: token.substring(0, 20) || 'user-' + Date.now() };
-  } catch (error) {
-    req.auth = { userId: 'guest-' + Math.random().toString(36).substr(2, 9) };
-  }
+  req.auth = { userId };
   next();
 };
 
@@ -93,82 +86,24 @@ app.get('/health', (req, res) => {
 });
 
 // =====================
-// ✅ LEGACY ENDPOINT (for backward compatibility)
-// =====================
-app.post('/api/audit', async (req, res) => {
-  const { url } = req.body;
-
-  if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
-  }
-
-  try {
-    const { data } = await axios.get(url, {
-      timeout: 10000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-
-    const $ = cheerio.load(data);
-
-    const audit = {
-      title: $('title').text() || 'No title found',
-      description: $('meta[name="description"]').attr('content') || 'No description found',
-      h1Count: $('h1').length,
-      imagesWithoutAlt: []
-    };
-
-    $('img').each((i, el) => {
-      const alt = $(el).attr('alt');
-      if (!alt || alt.trim() === '') {
-        const src = $(el).attr('src');
-        if (src) {
-          audit.imagesWithoutAlt.push(src);
-        }
-      }
-    });
-
-    res.json(audit);
-  } catch (error) {
-    console.error('Error:', error.message);
-    
-    let errorMessage = 'Failed to audit the URL.';
-    
-    if (error.code === 'ENOTFOUND') {
-      errorMessage = 'Domain not found. Please check the URL and try again.';
-    } else if (error.code === 'ECONNREFUSED') {
-      errorMessage = 'Connection refused. Please check the URL.';
-    } else if (error.code === 'ECONNABORTED') {
-      errorMessage = 'Request timeout. The website took too long to respond.';
-    } else if (error.response?.status === 404) {
-      errorMessage = 'Website returned 404 (Not Found).';
-    } else if (error.response?.status === 403) {
-      errorMessage = 'Access to this website is blocked or restricted.';
-    }
-    
-    res.status(500).json({ error: errorMessage });
-  }
-});
-
-// =====================
 // 🔐 PROTECTED ROUTES - Enterprise Audit API
 // =====================
 
-// Create a router for v1 API
 const v1Router = express.Router();
 
-// Perform new audit (requires authentication)
-v1Router.post('/audit', async (req, res) => {
+v1Router.post('/audit', auditLimiter, async (req, res) => {
   try {
     const userId = req.auth.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
+
+    const { url } = req.body || {};
+    if (!url || typeof url !== 'string' || url.length > 2048) {
+      return res.status(400).json({ error: 'A valid URL (≤2048 chars) is required' });
     }
 
-    const { url } = req.body;
-    if (!url) {
-      return res.status(400).json({ error: 'URL is required' });
+    try {
+      await assertUrlIsPublic(url);
+    } catch (guardErr) {
+      return res.status(400).json({ error: guardErr.message });
     }
 
     const result = await auditController.performAudit(userId, url);
@@ -265,9 +200,8 @@ v1Router.get('/dashboard', async (req, res) => {
   }
 });
 
-// Start server
-// Mount the v1 router with auth middleware
-app.use('/api/v1', authMiddleware, v1Router);
+// Mount Clerk + auth only on protected routes so /health stays public.
+app.use('/api/v1', clerkAuth, authMiddleware, v1Router);
 
 const PORT = process.env.PORT || 5000;
 

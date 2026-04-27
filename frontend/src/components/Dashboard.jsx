@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Download, Search, AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
@@ -8,9 +8,11 @@ import jsPDF from 'jspdf';
 
 const Dashboard = () => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [url, setUrl] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [coldStart, setColdStart] = useState(false);
   const [error, setError] = useState(null);
   const targetRef = useRef();
 
@@ -20,8 +22,12 @@ const Dashboard = () => {
       return;
     }
     setLoading(true);
+    setColdStart(false);
     setError(null);
     setResult(null);
+
+    // Render free-tier sleeps after 15min idle. After 5s of waiting, hint at it.
+    const coldStartTimer = setTimeout(() => setColdStart(true), 5000);
 
     try {
       // Ensure URL starts with a protocol
@@ -34,25 +40,17 @@ const Dashboard = () => {
       console.log('API URL:', apiUrl);
       console.log('Audit URL:', auditUrl);
       
-      // Get the auth token from Clerk
-      let token = '';
-      if (user) {
-        try {
-          token = await user.getIdToken();
-          console.log('Clerk token obtained');
-        } catch (tokenErr) {
-          console.warn('Could not get Clerk token:', tokenErr.message);
-          token = 'anonymous';
-        }
-      } else {
-        console.warn('User not authenticated, using guest mode');
-        token = 'guest';
+      const token = await getToken();
+      if (!token) {
+        setError('Please sign in to run an audit.');
+        setLoading(false);
+        return;
       }
 
-      const res = await axios.post(`${apiUrl}/api/v1/audit`, 
+      const res = await axios.post(`${apiUrl}/api/v1/audit`,
         { url: auditUrl },
         {
-          timeout: 15000,
+          timeout: 60000,
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -90,7 +88,9 @@ const Dashboard = () => {
       
       setError(errorMessage);
     } finally {
+      clearTimeout(coldStartTimer);
       setLoading(false);
+      setColdStart(false);
     }
   };
 
@@ -161,6 +161,16 @@ const Dashboard = () => {
               )}
             </button>
           </div>
+          {coldStart && loading && (
+            <motion.div
+              className="mt-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 p-4 rounded-lg flex gap-2 items-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <Clock size={18} />
+              Free-tier server is waking up — first request can take ~30s. Hang tight.
+            </motion.div>
+          )}
           {error && (
             <motion.div
               className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-4 rounded-lg flex gap-2"

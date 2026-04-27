@@ -65,5 +65,7 @@ const auditSchema = new mongoose.Schema(
 
 // Index for efficient caching lookups
 auditSchema.index({ userId: 1, url: 1, lastScannedAt: -1 });
+// Index for the history listing query: find({ userId }).sort({ createdAt: -1 })
+auditSchema.index({ userId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Audit', auditSchema);

@@ -170,6 +170,9 @@ async function performAudit(userId, url) {
     // Fetch the page
     const { data } = await axios.get(url, {
       timeout: 10000,
+      maxContentLength: 5 * 1024 * 1024, // 5 MB cap on response body
+      maxRedirects: 3,
+      responseType: 'text',
       headers: {
         'User-Agent': 'SEO-Vision-Crawler/1.0 (Enterprise SEO Platform; +https://seo-vision.io)',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, ExternalLink, Calendar, TrendingUp } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const History = () => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [audits, setAudits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -15,8 +16,9 @@ const History = () => {
     const fetchAudits = async () => {
       try {
         setLoading(true);
+        const token = await getToken();
         const response = await fetch(`${API_URL}/api/v1/audits`, {
-          headers: { Authorization: `Bearer ${await user?.getIdToken()}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) throw new Error('Failed to fetch audits');
@@ -32,15 +34,16 @@ const History = () => {
     if (user) {
       fetchAudits();
     }
-  }, [user]);
+  }, [user, getToken]);
 
   const handleDelete = async (auditId) => {
     if (!window.confirm('Are you sure you want to delete this audit?')) return;
 
     try {
+      const token = await getToken();
       const response = await fetch(`${API_URL}/api/v1/audits/${auditId}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${await user?.getIdToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error('Failed to delete audit');
