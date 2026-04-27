@@ -30,11 +30,27 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
+// Optional: a Vercel project slug to whitelist preview deploys (e.g. "seo-analyzer-tool").
+// All `https://<anything>-<slug>-*.vercel.app` and `https://<slug>-*.vercel.app` are allowed.
+const vercelProjectSlug = process.env.VERCEL_PROJECT_SLUG;
+const vercelPreviewRe = vercelProjectSlug
+  ? new RegExp(`^https://([\\w-]+-)?${vercelProjectSlug}(-[\\w-]+)?\\.vercel\\.app$`)
+  : null;
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (vercelPreviewRe && vercelPreviewRe.test(origin)) return true;
+  return false;
+}
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    // Reject without throwing — the browser will surface a clean CORS error
+    // instead of a 500 from Express's default error handler.
+    console.warn(`CORS: rejected origin ${origin}`);
+    return callback(null, false);
   },
   credentials: true,
 }));
